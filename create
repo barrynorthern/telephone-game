@@ -1,0 +1,117 @@
+#!/bin/bash
+lower=("a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" "m" "n" "o" "p" "q" "r" "s" "t" "u" "v" "w" "x" "y" "z")
+
+# Take command line arguments into an array called "teams"
+teams=("$@")
+# Set the variable "num_teams" to the length of the array
+num_teams=${#teams[@]}
+
+if ((num_teams == 0)); then
+    echo "Please provide at least one team to play the game."
+    exit 1
+fi
+
+# Select a function from the functions folder for each team
+functions=($(ls ./functions | cut -d'.' -f1 | head -n "$num_teams"))
+
+# Output the descriptions of what happens in the game
+summary_file="./results.md"
+echo "# Results" > $summary_file
+instructions_file="./instructions.md"
+echo "# Instructions" > $instructions_file
+teams_string=""
+for team in "${teams[@]}"; do
+  teams_string+="$(printf '%-20s' "$team") | "
+done
+teams_string=" ${teams_string% | }" 
+header=$(echo "$teams_string" | tr -c '|' '-')
+header=${header%?}
+echo "| Round |${teams_string}|" >> $instructions_file
+echo "|-------|${header}|" >> $instructions_file
+team_rounds=()
+
+# Set up a loop for the number of rounds
+for ((i=0; i<num_teams; i++))
+do
+    func=${functions[$number]}
+    number=$((i + 1))
+
+    echo "## Function ${number}" >> "$summary_file"
+    echo "" >> "$summary_file"
+    
+    folder_name=$(printf "%02d" $number)_${func}
+    folder_path="./game/${folder_name}"
+    
+    mkdir -p "$folder_path"
+
+    team=$((i))
+
+    src="01_f${number}.js"
+    cp "./functions/${func}.js" "${folder_path}/${src}"
+    dst="02_d${number}.txt"
+    touch "${folder_path}/${dst}"
+    echo "- Taking [${src}](./${folder_path}/${src}), **${teams[team]}** described it as [${dst}](./${folder_path}/${dst})" >> "$summary_file"
+
+    key="${teams[team]}_0"
+    team_rounds+=("${key}:[${src}](./${folder_path}/${src}) -> [${dst}](./${folder_path}/${dst})")
+
+    for ((t=1; t<num_teams; t++))
+    do
+        src=${dst}
+        if ((t % 2 == 0)); then
+            verb="described"
+            short="d"
+            ext="txt"
+        else
+            verb="implemented"
+            short="f"
+            ext="js"
+        fi
+        team=$((team + 1))
+        team=$((team % 4))
+
+        prefix=$((t + 2))
+        suffix=${lower[$(( (t - 1) / 2 ))]}
+        dst=$(printf "%02d" $prefix)_${short}${number}${suffix}.${ext}
+        echo "- Then, **${teams[team]}** ${verb} it as [${dst}](./${folder_path}/${dst})" >> "$summary_file"
+        touch "${folder_path}/${dst}"
+
+        key="${teams[team]}_${t}"
+        team_rounds+=("${key}:[${src}](./${folder_path}/${src}) -> [${dst}](./${folder_path}/${dst})")
+    done
+    echo "" >> "$summary_file"
+done
+
+findMap() {
+  # The key you're searching
+  search_key="$1:"
+  # Iterate over the elements in the round_teams array
+  for element in "${team_rounds[@]}"; do
+    # If the element starts with the search key
+    if [[ $element == "$search_key"* ]]; then
+      # Strip the search key from the element to get the value
+      value="${element#"$search_key"}"
+      echo "$value"
+      break
+    fi
+  done
+}
+
+for ((round=0; round<num_teams; round++))
+do
+    row=""
+    for ((i=0; i<num_teams; i++))
+    do
+        team=$((i))
+        key="${teams[team]}_${round}"
+        value=$(findMap "$key")
+        row+=$value
+        row+="|"
+    done
+    echo "| $((round + 1)) | ${row}" >> $instructions_file
+done
+
+cat $summary_file >> $instructions_file
+rm $summary_file
+
+echo "Game folder setup complete."

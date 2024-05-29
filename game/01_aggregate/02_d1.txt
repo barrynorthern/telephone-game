@@ -1,0 +1,5 @@
+PR Description.
+Write a function to Aggregate a set of records by its Unique Identifier.
+Input - Object array with id and value attributes
+Output - Should return an object with unique key value pairs where id is unique.
+Considerations - You may assume that the value attribute to be a primary type.

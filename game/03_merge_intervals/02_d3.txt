@@ -1,0 +1,8 @@
+This JavaScript function, function3, is designed to merge overlapping intervals. It takes an array of intervals as input, where each interval is represented as a two-element array. Here's how it works:
+If the input array is empty, it returns an empty array.
+It sorts the intervals in ascending order based on their start times.
+It initialises the merged array with the first interval.
+It then iterates over the rest of the intervals. For each interval:
+If the start of the current interval is less than or equal to the end of the last merged interval, it means there's an overlap. In this case, it updates the end of the last merged interval to be the maximum of the current end and the end of the last merged interval.
+If there's no overlap, it adds the current interval to the merged array.
+Finally, it returns the merged array, which contains the merged intervals.

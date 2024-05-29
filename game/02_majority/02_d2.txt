@@ -1,0 +1,3 @@
+// the function takes in an array of numbers and 
+// finds any number that makes up more than half of the array
+// and returns it, else return nulls
